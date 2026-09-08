@@ -89,7 +89,7 @@ const MainPlaygroundPage = () => {
     error: containerError,
     instance,
     writeFileSync,
-    // @ts-ignore
+  // @ts-expect-error — required for current component typing
   } = useWebContainer({ templateData });
 
   const lastSyncedContent = useRef<Map<string, string>>(new Map());
@@ -201,20 +201,42 @@ const MainPlaygroundPage = () => {
           JSON.stringify(latestTemplateData)
         );
 
-        // @ts-ignore
-          const updateFileContent = (items: any[]) =>
-            // @ts-ignore
-          items.map((item) => {
-            if ("folderName" in item) {
-              return { ...item, items: updateFileContent(item.items) };
-            } else if (
-              item.filename === fileToSave.filename &&
-              item.fileExtension === fileToSave.fileExtension
-            ) {
-              return { ...item, content: fileToSave.content };
-            }
-            return item;
-          });
+type TemplateItem =
+  | {
+      folderName: string;
+      items: TemplateItem[];
+    }
+  | {
+      filename: string;
+      fileExtension: string;
+      content: string;
+    };  
+
+const updateFileContent = (items: TemplateItem[]): TemplateItem[] =>
+  items.map((item) => {
+    if ("folderName" in item) {
+      return {
+        ...item,
+        items: updateFileContent(item.items),
+      };
+    }
+
+    if (
+      item.filename === fileToSave.filename &&
+      item.fileExtension === fileToSave.fileExtension
+    ) {
+      return {
+        ...item,
+        content: fileToSave.content,
+      };
+    }
+
+    return item;
+  });
+
+
+
+
         updatedTemplateData.items = updateFileContent(
           updatedTemplateData.items
         );
@@ -228,8 +250,8 @@ const MainPlaygroundPage = () => {
           }
         }
 
-           const newTemplateData = await saveTemplateData(updatedTemplateData);
-        setTemplateData(newTemplateData || updatedTemplateData);
+ await saveTemplateData(updatedTemplateData);
+setTemplateData(updatedTemplateData);
 // Update open files
         const updatedOpenFiles = openFiles.map((f) =>
           f.id === targetFileId
