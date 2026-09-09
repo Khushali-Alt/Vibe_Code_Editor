@@ -95,60 +95,72 @@ export const createPlayground = async (data: {
   }
 };
 
-export const deleteProjectById = async (id: string) => {
+
+export async function deleteProjectById(id: string): Promise<void> {
   try {
     await db.playground.delete({
       where: {
         id,
       },
     });
+
     revalidatePath("/dashboard");
   } catch (error) {
-    console.log(error);
+    console.error("Error deleting project:", error);
+    throw new Error("Failed to delete project");
   }
-};
+}
 
-export const editProjectById = async (
+
+export async function editProjectById(
   id: string,
   data: { title: string; description: string }
-) => {
+): Promise<void> {
   try {
     await db.playground.update({
       where: {
         id,
       },
-      data: data,
+      data,
     });
+
     revalidatePath("/dashboard");
   } catch (error) {
-    console.log(error);
+    console.error("Error updating project:", error);
+    throw new Error("Failed to update project");
   }
-};
+}
 
-export const duplicateProjectById = async (id: string) => {
+
+export async function duplicateProjectById(id: string): Promise<void> {
   try {
     const originalPlayground = await db.playground.findUnique({
-      where: { id },
-      // todo: add tempalte files
+      where: {
+        id,
+      },
     });
+
     if (!originalPlayground) {
       throw new Error("Original playground not found");
     }
 
-    const duplicatedPlayground = await db.playground.create({
+    await db.playground.create({
       data: {
         title: `${originalPlayground.title} (Copy)`,
         description: originalPlayground.description,
         template: originalPlayground.template,
         userId: originalPlayground.userId,
-
-        // todo: add template files
       },
     });
 
     revalidatePath("/dashboard");
-    return duplicatedPlayground;
   } catch (error) {
     console.error("Error duplicating project:", error);
+    throw new Error("Failed to duplicate project");
   }
 };
+
+
+
+
+
