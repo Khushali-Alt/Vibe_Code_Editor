@@ -10,6 +10,7 @@ import { getAccountByUserId, getUserById } from "./modules/auth/actions";
 
  
 export const { auth, handlers, signIn, signOut } = NextAuth({
+  debug: true,
   callbacks: {
     /**
      * Handle user creation and account linking after a successful sign-in
